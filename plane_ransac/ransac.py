@@ -5,7 +5,7 @@ import numpy.typing as npt
 import numba as nb
 from numba import cuda
 
-from pyplaneransac.util import (
+from plane_ransac.util import (
     get_plane_from_points,
     measure_distance,
 )
