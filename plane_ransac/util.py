@@ -73,7 +73,7 @@ def get_plane_from_points(points, initial_point_indices):
         abc_y = xy * xz - yz * xx
         abc_z = det_z
 
-    norm = (abc_x ** 2 + abc_y ** 2 + abc_z ** 2) ** 0.5
+    norm = (abc_x**2 + abc_y**2 + abc_z**2) ** 0.5
     if norm == 0:
         return 0.0, 0.0, 0.0, 0.0
 

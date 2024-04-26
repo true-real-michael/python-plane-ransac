@@ -21,10 +21,10 @@ class CudaRansac:
     """
 
     def __init__(
-            self,
-            threshold: float = 0.01,
-            hypotheses_number: int = CUDA_THREADS,
-            initial_points_number: int = 6,
+        self,
+        threshold: float = 0.01,
+        hypotheses_number: int = CUDA_THREADS,
+        initial_points_number: int = 6,
     ):
         """
         Initialize the RANSAC parameters.
@@ -53,7 +53,9 @@ class CudaRansac:
         blocks_number = len(point_clouds)
 
         # create result planes and copy it to the device
-        result_planes_cuda = cuda.to_device(np.zeros((blocks_number, 4), dtype=np.float32))
+        result_planes_cuda = cuda.to_device(
+            np.zeros((blocks_number, 4), dtype=np.float32)
+        )
 
         # copy combined_point_cloud, block_sizes and block_start_indices to the device
         point_cloud_cuda = cuda.to_device(combined_point_cloud)
@@ -90,7 +92,9 @@ class CudaRansac:
         blocks_number = len(point_clouds)
 
         # create result mask and planes array and copy them to the device
-        result_mask_cuda = cuda.to_device(np.zeros((len(combined_point_cloud)), dtype=np.bool_))
+        result_mask_cuda = cuda.to_device(
+            np.zeros((len(combined_point_cloud)), dtype=np.bool_)
+        )
         planes_cuda = cuda.to_device(np.zeros((blocks_number, 4), dtype=np.float32))
 
         # copy combined_point_cloud, block_sizes and block_start_indices to the device
@@ -129,18 +133,18 @@ class CudaRansac:
     @staticmethod
     @cuda.jit
     def __compute_mask(
-            point_cloud: npt.NDArray,
-            block_sizes: npt.NDArray,
-            block_start_indices: npt.NDArray,
-            planes: npt.NDArray,
-            threshold: float,
-            result_mask: npt.NDArray,
+        point_cloud: npt.NDArray,
+        block_sizes: npt.NDArray,
+        block_start_indices: npt.NDArray,
+        planes: npt.NDArray,
+        threshold: float,
+        result_mask: npt.NDArray,
     ):
         thread_id, block_id = cuda.threadIdx.x, cuda.blockIdx.x
         for i in range(
-                block_start_indices[block_id] + thread_id,
-                block_start_indices[block_id] + block_sizes[block_id],
-                cuda.blockDim.x,
+            block_start_indices[block_id] + thread_id,
+            block_start_indices[block_id] + block_sizes[block_id],
+            cuda.blockDim.x,
         ):
             if measure_distance(planes[block_id], point_cloud[i]) < threshold:
                 result_mask[i] = True
@@ -149,12 +153,12 @@ class CudaRansac:
     def __get_eval_plane_kernel(initial_points_number):
         @cuda.jit
         def eval_plane(
-                point_cloud: npt.NDArray,
-                block_sizes: npt.NDArray,
-                block_start_indices: npt.NDArray,
-                random_hypotheses: npt.NDArray,
-                threshold: float,
-                planes: npt.NDArray,
+            point_cloud: npt.NDArray,
+            block_sizes: npt.NDArray,
+            block_start_indices: npt.NDArray,
+            random_hypotheses: npt.NDArray,
+            threshold: float,
+            planes: npt.NDArray,
         ):
             thread_id, block_id = cuda.threadIdx.x, cuda.blockIdx.x
 
@@ -202,8 +206,8 @@ class CudaRansac:
             # write this thread's plane to the `planes` array for a given block
             cuda.syncthreads()
             if (
-                    inliers_number_local == max_inliers_number[0]
-                    and cuda.atomic.compare_and_swap(mutex, 0, 1) == 0
+                inliers_number_local == max_inliers_number[0]
+                and cuda.atomic.compare_and_swap(mutex, 0, 1) == 0
             ):
                 for i in range(4):
                     planes[block_id][i] = plane[i]
