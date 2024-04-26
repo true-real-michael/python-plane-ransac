@@ -40,22 +40,20 @@ class CudaRansac:
             np.random.random((self.__threads_per_block, initial_points_number))
         )
 
-    def evaluate_point_masks(
-            self,
-            point_clouds: List[npt.NDArray],
-    ):
+    def evaluate_planes(self, point_clouds: List[npt.NDArray]):
         """
-        For each point cloud in the list of point clouds,
-        fit a plane to the point cloud and return a mask of inliers.
-        :param point_clouds: List of point clouds to fit the model to.
+        For each point cloud in the list of point clouds
+        fits a plane and returns the list of them
+        :param point_clouds: List of point clouds to fit the plane to.
+        :return: NDArray of planes, where each plane corresponds to a point cloud
         """
 
         combined_point_cloud = np.concatenate(point_clouds)
         block_sizes = [len(pc) for pc in point_clouds]
         blocks_number = len(point_clouds)
 
-        # create result mask and copy it to the device
-        result_mask_cuda = cuda.to_device(np.zeros((len(combined_point_cloud)), dtype=np.bool_))
+        # create result planes and copy it to the device
+        result_planes_cuda = cuda.to_device(np.zeros((blocks_number, 4), dtype=np.float32))
 
         # copy combined_point_cloud, block_sizes and block_start_indices to the device
         point_cloud_cuda = cuda.to_device(combined_point_cloud)
@@ -67,9 +65,45 @@ class CudaRansac:
             np.cumsum(np.concatenate(([0], block_sizes[:-1])))
         )
 
+        # call plane evaluation kernel
+        self.__eval_plane[blocks_number, self.__threads_per_block](
+            point_cloud_cuda,
+            block_sizes_cuda,
+            block_start_indices_cuda,
+            self.__random_hypotheses_cuda,
+            self.__threshold,
+            result_planes_cuda,
+        )
+
+        # copy result planes back to the host
+        return result_planes_cuda.copy_to_host()
+
+    def evaluate_point_masks(self, point_clouds: List[npt.NDArray]):
+        """
+        For each point cloud in the list of point clouds,
+        fit a plane and return a mask of inliers.
+        :param point_clouds: List of point clouds to fit the plane to.
+        """
+
+        combined_point_cloud = np.concatenate(point_clouds)
+        block_sizes = [len(pc) for pc in point_clouds]
+        blocks_number = len(point_clouds)
+
+        # create result mask and planes array and copy them to the device
+        result_mask_cuda = cuda.to_device(np.zeros((len(combined_point_cloud)), dtype=np.bool_))
         planes_cuda = cuda.to_device(np.zeros((blocks_number, 4), dtype=np.float32))
 
-        # call the kernel
+        # copy combined_point_cloud, block_sizes and block_start_indices to the device
+        point_cloud_cuda = cuda.to_device(combined_point_cloud)
+        block_sizes_cuda = cuda.to_device(block_sizes)
+        # block_start_indices is an array of indices where each cuda block should
+        # take data from this combined with block_sizes allows it to quickly
+        # find the desired part of the point cloud
+        block_start_indices_cuda = cuda.to_device(
+            np.cumsum(np.concatenate(([0], block_sizes[:-1])))
+        )
+
+        # call plane evaluation and mask computation kernels
         self.__eval_plane[blocks_number, self.__threads_per_block](
             point_cloud_cuda,
             block_sizes_cuda,
@@ -78,7 +112,6 @@ class CudaRansac:
             self.__threshold,
             planes_cuda,
         )
-
         self.__compute_mask[blocks_number, self.__threads_per_block](
             point_cloud_cuda,
             block_sizes_cuda,

@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.typing as npt
 import matplotlib.pyplot as plt
 
 
@@ -7,6 +8,18 @@ def plot_point_clouds(pcs):
     ax = fig.add_subplot(111, projection="3d")
     for pc in pcs:
         ax.scatter(pc[:, 0], pc[:, 1], pc[:, 2])
+    plt.show()
+
+
+def plot_planes(planes: npt.NDArray):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+    for plane in planes:
+        x = np.linspace(-10, 10, 10)
+        y = np.linspace(-10, 10, 10)
+        x, y = np.meshgrid(x, y)
+        z = (-plane[0] * x - plane[1] * y - plane[3]) / plane[2]
+        ax.plot_surface(x, y, z)
     plt.show()
 
 
