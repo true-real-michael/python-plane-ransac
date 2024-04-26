@@ -10,7 +10,7 @@ To run the exmples, clone the repository
 ```bash
 git clone https://github.com/true-real-michael/python-plane-ransac.git
 ```
-To use in your owd code, install via pip
+To use in your own code, install via pip
 ```bash
 pip install git+https://github.com/true-real-michael/python-plane-ransac.git
 ```
