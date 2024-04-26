@@ -1,0 +1,10 @@
+[project]
+name = "plane_ransac"
+dynamic = ["dependencies"]
+version = "0.0.1"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
