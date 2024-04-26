@@ -6,6 +6,11 @@ This implementation can can be used to segment planes from multiple point clouds
 The hypotheses are tested in parallel as well.
 
 ## Installation
+To run the exmples, clone the repository
+```bash
+git clone https://github.com/true-real-michael/python-plane-ransac.git
+```
+To use in your owd code, install via pip
 ```bash
 pip install git+https://github.com/true-real-michael/python-plane-ransac.git
 ```
