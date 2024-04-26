@@ -19,7 +19,7 @@ def plot_planes(planes: npt.NDArray):
         y = np.linspace(-10, 10, 10)
         x, y = np.meshgrid(x, y)
         z = (-plane[0] * x - plane[1] * y - plane[3]) / plane[2]
-        ax.plot_surface(x, y, z)
+        ax.plot_surface(x, y, z, alpha=0.8)
     plt.show()
 
 
@@ -31,6 +31,7 @@ def generate_planar_cloud(
         sigma: float,
         outlier_ratio: float,
 ):
+    plane_coefficients = np.array(plane_coefficients) / np.linalg.norm(plane_coefficients[:3])
     voxel_points = (
             np.random.rand(points_number, 3) * np.array([edge_length - 6 * sigma] * 3)
             + voxel_corner
